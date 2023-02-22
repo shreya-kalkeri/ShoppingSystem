@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Cart</title>
+
+	<link rel="stylesheet" href="imports/fontawesome.css" />
+
+	<link rel="stylesheet" href="imports/bootstrap.min.css">
+	<script src="imports/jquery-3.6.0.js"></script>
+
+	<link rel="stylesheet" href="imports/jquery.dataTables.min.css">
+	<script src="imports/jquery.dataTables.min.js"></script>
+
+	<script src="js/username.js"></script>
+	<link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+	<div class="container-fluid">
+
+		<div class="navigation-bar">
+    		<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    			<a class="navbar-brand" href="index.html">Shopping System</a>
+
+    			<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+    				<div class="navbar-nav">
+    					<a class="nav-item nav-link" href="cart.html">Cart</a>
+    					<a class="nav-item nav-link" href="orders.html">Orders</a>
+    				</div>
+
+					<div class="navbar-nav ms-auto flex-nowrap">
+    					<a class="nav-item nav-link login-link" href="login.html">Login</a>
+						<a class="nav-item nav-link name-link" href="javascript:void(0)">Name Here</a>
+    				</div>
+    			</div>
+    		</nav>
+    	</div>
+
+    	<div class="container mt-5 mb-5">
+    		<div class="row">
+                <div class="col-9">
+					<div class="user-info-container">
+            			<div class="d-flex justify-content-center">
+            				<h3><u>User Data</u></h3>
+            			</div>
+
+            			<table class="table table-bordered mt-2" id="user-table">
+            				<tbody>
+                                <tr>
+                                	<td><strong>Name</strong></td>
+									<td id="user_info_1"></td>
+                                </tr>
+								<tr>
+                                	<td><strong>Address</strong></td>
+									<td id="user_info_2"></td>
+                                </tr>
+								<tr>
+                                	<td><strong>City</strong></td>
+									<td id="user_info_3"></td>
+                                </tr>
+								<tr>
+                                	<td><strong>Postal Code</strong></td>
+									<td id="user_info_4"></td>
+                                </tr>
+								<tr>
+                                	<td><strong>Mobile</strong></td>
+									<td id="user_info_5"></td>
+                                </tr>
+            				</tbody>
+            			</table>
+            		</div>
+					<hr>
+					<div class="payment-info-container">
+            			<div class="d-flex justify-content-center mt-2 mb-3">
+            				<h3><u>Payment Method</u></h3>
+            			</div>
+
+						<select class="payment-method form-control">
+							<option value="card_payment">Card Payment</option>
+							<option value="cash_on_delivery">Cash on Delivery</option>
+						</select>
+
+            			<table class="table table-bordered mt-5 payment_table">
+            				<tbody>
+                                <tr>
+                                	<td><strong>Name on Card</strong></td>
+									<td><input class="form-control" placeholder="Name on Card"></td>
+                                </tr>
+								<tr>
+                                	<td><strong>Card Number</strong></td>
+									<td><input class="form-control" placeholder="XXXX XXXX XXXX XXXX"></td>
+                                </tr>
+								<tr>
+                                	<td><strong>Expiry Date</strong></td>
+									<td><input class="form-control" placeholder="MM/YY"></td>
+                                </tr>
+            				</tbody>
+            			</table>
+            		</div>
+					<hr>
+					<div class="table-container">
+            			<div class="d-flex justify-content-center mt-3">
+            				<h3><u>Cart Items</u></h3>
+            			</div>
+
+            			<table class="table table-bordered mt-3" id="cart-table">
+            				<thead>
+            					<tr>
+            						<th>Name</th>
+            						<th>Price</th>
+            						<th>Quantity</th>
+                                    <th>Remove</th>
+            					</tr>
+            				</thead>
+            				<tbody>
+                                <!-- Data will be added Dynamically -->
+            				</tbody>
+            			</table>
+            		</div>
+                </div>
+
+                <div class="col-3">
+
+                </div>
+            </div>
+    	</div>
+
+    </div>
+</body>
+
+<script>
+    function fetch_cart_items() {
+		var user_data = sessionStorage.getItem("current_user_data");
+
+		var user_id = "";
+		if(!(user_data === null)){
+			var user_data_json = JSON.parse(user_data);
+			user_id = user_data_json["user_id"]
+		}
+
+        $.ajax({
+            url: "http://127.0.0.1:5050/get_cart/"+user_id,
+            type: "GET",
+            dataType: 'json',
+            success: function(response) {
+				$("#user_info_1").html(response["user_data_json"]["name"]);
+				$("#user_info_2").html(response["user_data_json"]["address"]);
+				$("#user_info_3").html(response["user_data_json"]["city_id"]);
+				$("#user_info_4").html(response["user_data_json"]["postal"]);
+				$("#user_info_5").html(response["user_data_json"]["mobile"]);
+
+                if(response["products_list"].length == 0) {
+                    $("#cart-table tbody").html('<tr><td colspan="4" style="text-align:center;">No Items in Cart</td></tr>');
+                } else {
+                    $("#cart-table tbody").html('');
+                }
+
+				var total_sum = 0;
+
+                for(var index in response["products_list"]) {
+                    var item = response["products_list"][index];
+
+                    var htmlContent = '<tr>' +
+                                      '<td>' + item['name'] + '</td>' +
+                                      '<td>' + item['price'] + '₹</td>' +
+                                      '<td>' + item['quantity'] + '</td>' +
+                                      '<td class="text-center"><button class="btn btn-danger" onclick="removeFromCart(\''+ item['product_id'] +'\');">Remove from Cart</button></td>' +
+                                      '</tr>';
+
+                    $("#cart-table tbody").append(htmlContent);
+
+					total_sum = total_sum + (item['price'] * item['quantity'])
+                }
+
+				if(response["products_list"].length > 0) {
+					var last_row = '<tr>' +
+								   '<td><strong>Grand Total</strong></td>' +
+								   '<td><strong>' + total_sum + '₹</strong></td>' +
+								   '<td colspan="2" class="text-center"><button class="btn btn-success btn-lg" onclick="checkOutCart('+ total_sum +');">Check Out Items</button></td>' +
+								   '</tr>';
+
+					$("#cart-table tbody").append(last_row);
+				}
+            }
+        });
+    }
+
+	function checkOutCart(total_amount) {
+		var check_out = confirm("Are you sure?");
+
+		if(!check_out) {
+			return;
+		}
+
+		var user_data = sessionStorage.getItem("current_user_data");
+
+		var user_id = "";
+		if(!(user_data === null)){
+			var user_data_json = JSON.parse(user_data);
+			user_id = user_data_json["user_id"]
+		}
+
+        var jsonData = {
+                            "user_id": user_id,
+                            "total_amount": total_amount
+                       }
+
+        $.ajax({
+            url: "http://127.0.0.1:5050/complete_order",
+            type: "POST",
+            data: JSON.stringify(jsonData),
+            contentType:"application/json",
+            dataType: 'json',
+            success: function(response) {
+                alert(response["message"])
+				location.href = "orders.html";
+            }
+        });
+	}
+
+	function removeFromCart(product_id) {
+		var user_data = sessionStorage.getItem("current_user_data");
+
+		var user_id = "";
+		if(!(user_data === null)){
+			var user_data_json = JSON.parse(user_data);
+			user_id = user_data_json["user_id"]
+		}
+
+        var jsonData = {
+                            "user_id": user_id,
+                            "product_id": product_id
+                       }
+
+        $.ajax({
+            url: "http://127.0.0.1:5050/remove_item_from_cart",
+            type: "POST",
+            data: JSON.stringify(jsonData),
+            contentType:"application/json",
+            dataType: 'json',
+            success: function(response) {
+                fetch_cart_items();
+            }
+        });
+	}
+
+	$(document).ready(function() {
+		fetch_cart_items();
+
+		$(".payment-method").change(function() {
+			console.log("Hii")
+
+			var select_value = $(".payment-method").val();
+
+			if(select_value == 'card_payment') {
+				$(".payment_table").show();
+			} else if(select_value == 'cash_on_delivery') {
+				$(".payment_table").hide();
+			}
+		});
+	});
+</script>
+
+</html>

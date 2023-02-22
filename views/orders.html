@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Orders</title>
+
+	<link rel="stylesheet" href="imports/fontawesome.css" />
+
+	<link rel="stylesheet" href="imports/bootstrap.min.css">
+	<script src="imports/jquery-3.6.0.js"></script>
+
+	<link rel="stylesheet" href="imports/jquery.dataTables.min.css">
+	<script src="imports/jquery.dataTables.min.js"></script>
+
+	<script src="js/username.js"></script>
+	<script src="js/common.js"></script>
+	<link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+	<div class="container-fluid">
+
+		<div class="navigation-bar">
+    		<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    			<a class="navbar-brand" href="index.html">Shopping System</a>
+
+    			<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+    				<div class="navbar-nav">
+    					<a class="nav-item nav-link" href="cart.html">Cart</a>
+    					<a class="nav-item nav-link" href="orders.html">Orders</a>
+    				</div>
+
+					<div class="navbar-nav ms-auto flex-nowrap">
+    					<a class="nav-item nav-link login-link" href="login.html">Login</a>
+						<a class="nav-item nav-link name-link" href="javascript:void(0)">Name Here</a>
+    				</div>
+    			</div>
+    		</nav>
+    	</div>
+
+    	<div class="container mt-5 mb-5">
+    		<div class="row">
+                <div class="col-4">
+					<div class="col-3">
+						<div class="orders-container">
+							<div class="d-flex justify-content-center">
+								<h3>Orders</h3>
+							</div>
+
+							<table class="table table-bordered mt-5" id="orders-table">
+								<thead>
+									<tr>
+										<th>Order Id</th>
+										<th>Action</th>
+									</tr>
+								</thead>
+								<tbody>
+									<!-- Data will be added Dynamically -->
+								</tbody>
+							</table>
+						</div>
+					</div>
+                </div>
+
+                <div class="col-8">
+						<div class="order-details-container">
+							<div class="d-flex justify-content-center">
+								<h3>Order Details</h3>
+							</div>
+
+							<table class="table table-bordered mt-5 payment_table">
+	            				<tbody>
+	                                <tr>
+	                                	<td><strong>Order Id</strong></td>
+										<td id="order_detail_field_1">Xxxxxxxxxx</td>
+	                                </tr>
+									<tr>
+	                                	<td><strong>Total Amount</strong></td>
+										<td id="order_detail_field_2">Xxxxxxxxxx</td>
+	                                </tr>
+									<tr>
+	                                	<td><strong>Payment Status</strong></td>
+										<td id="order_detail_field_3">Xxxxxxxxxx</td>
+	                                </tr>
+	            				</tbody>
+	            			</table>
+
+							<table class="table table-bordered mt-3" id="ordered-items-table">
+								<thead>
+									<tr>
+										<th>Name</th>
+										<th>Price</th>
+										<th>Quantity</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td colspan="3" style="text-align:center;">Click on the Order Id to show details</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+                </div>
+            </div>
+    	</div>
+
+    </div>
+</body>
+
+<script>
+    function fetch_all_order() {
+		var user_data = sessionStorage.getItem("current_user_data");
+
+		var user_id = "";
+		if(!(user_data === null)) {
+			var user_data_json = JSON.parse(user_data);
+			user_id = user_data_json["user_id"]
+		}
+
+        $.ajax({
+            url: "http://127.0.0.1:5050/get_all_orders/"+user_id,
+            type: "GET",
+            dataType: 'json',
+            success: function(response) {
+
+                if(response.length == 0) {
+                    $("#orders-table tbody").html('<tr><td colspan="2" style="text-align:center;">No Orders to Show</td></tr>');
+                } else {
+                    $("#orders-table tbody").html('');
+                }
+
+                for(var index in response) {
+                    var item = response[index];
+
+                    var htmlContent = '<tr>' +
+                                      '<td class="link-link-class order-details-click">' + item['order_id'] + '</td>' +
+                                      '<td>'+
+									  '<a href="tracking.html?order_tracking_id='+ item['order_id'] +'">' +
+									  'Track' +
+									  '</a>' +
+									  '</td>' +
+                                      '</tr>';
+
+                    $("#orders-table tbody").append(htmlContent);
+                }
+
+				$(".order-details-click").click(function() {
+					var order_details_id = $(this).html();
+
+					$.ajax({
+			            url: "http://127.0.0.1:5050/get_order_details/"+order_details_id,
+			            type: "GET",
+			            dataType: 'json',
+			            success: function(response) {
+							var payment_details = response['payment_details'];
+							$("#order_detail_field_1").html(payment_details['order_id']);
+							$("#order_detail_field_2").html(payment_details['amount']);
+							$("#order_detail_field_3").html(payment_details['status']);
+
+							var order_items = response['order_items'];
+
+			                if(order_items.length == 0) {
+			                    $("#ordered-items-table tbody").html('<tr><td colspan="3" style="text-align:center;">No items to show</td></tr>');
+			                } else {
+			                    $("#ordered-items-table tbody").html('');
+			                }
+
+			                for(var index in order_items) {
+			                    var item = order_items[index];
+
+			                    var htmlContent = '<tr>' +
+			                                      '<td>' + item['name'] + '</td>' +
+			                                      '<td>' + item['price'] + '</td>' +
+												  '<td>' + item['quantity'] + '</td>' +
+			                                      '</tr>';
+
+			                    $("#ordered-items-table tbody").append(htmlContent);
+			                }
+			            }
+			        });
+				});
+
+				$(".order-details-click").eq(0).click();
+            }
+        });
+    }
+
+	$(document).ready(function() {
+		fetch_all_order();
+		find_suggested_products();
+	});
+</script>
+
+</html>

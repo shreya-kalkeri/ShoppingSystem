@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Orders</title>
+
+	<link rel="stylesheet" href="imports/fontawesome.css">
+
+	<link rel="stylesheet" href="imports/bootstrap.min.css">
+	<script src="imports/jquery-3.6.0.js"></script>
+
+	<link rel="stylesheet" href="imports/jquery.dataTables.min.css">
+	<script src="imports/jquery.dataTables.min.js"></script>
+
+    <link rel="stylesheet" href="imports/ol.css" type="text/css">
+	<script src="imports/ol.js"></script>
+
+	<script src="js/username.js"></script>
+	<link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+	<div class="container-fluid">
+
+		<div class="navigation-bar">
+    		<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    			<a class="navbar-brand" href="index.html">Shopping System</a>
+
+    			<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+    				<div class="navbar-nav">
+    					<a class="nav-item nav-link" href="cart.html">Cart</a>
+    					<a class="nav-item nav-link" href="orders.html">Orders</a>
+    				</div>
+
+					<div class="navbar-nav ms-auto flex-nowrap">
+    					<a class="nav-item nav-link login-link" href="login.html">Login</a>
+						<a class="nav-item nav-link name-link" href="javascript:void(0)">Name Here</a>
+    				</div>
+    			</div>
+    		</nav>
+    	</div>
+
+    	<div class="container mt-2 mb-2">
+    		<div class="row">
+                <div class="col-2"></div>
+                <div class="col-8">
+                    <div class="row">
+						<div class="col-12">
+							<div class="container" style="margin: auto;width: 80%;">
+							    <div class="row">
+									<div class="col-12 col-md-10 hh-grayBox pt20 pb20">
+										<div class="row justify-content-between">
+											<div class="order-tracking completed">
+												<span class="is-complete"></span>
+												<p>Ordered<br></p>
+											</div>
+											<div class="order-tracking completed">
+												<span class="is-complete"></span>
+												<p>Shipped<br></p>
+											</div>
+											<div class="order-tracking" id="after-delivery">
+												<span class="is-complete"></span>
+												<p>Out for Delivery<br></p>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-12">
+							<div id="map" style="width:850px;height:500px;">
+		        				<!-- Your map will be shown inside this div-->
+		        			</div>
+						</div>
+                	</div>
+				</div>
+                <div class="col-2"></div>
+            </div>
+    	</div>
+
+    </div>
+</body>
+
+<script>
+    //Base Layer with Open Street Maps
+    var baseMapLayer = new ol.layer.Tile({
+    source: new ol.source.OSM()
+    });
+
+    //Construct the Map Object
+    var map = new ol.Map({
+    target: 'map',
+    layers: [ baseMapLayer],
+    view: new ol.View({
+          center: ol.proj.fromLonLat([9.597657322883604, 50.63273871494269]),
+          zoom: 10 //Initial Zoom Level
+        })
+    });
+
+    map.on('click', function(evt){
+    console.info(ol.proj.toLonLat(evt.coordinate));
+    });
+
+    //Set up an  Style for the marker note the image used for marker
+    var iconStyle = new ol.style.Style({
+    image: new ol.style.Icon(({
+      anchor: [0.5, 12],
+      anchorXUnits: 'fraction',
+      anchorYUnits: 'pixels',
+      src: './image/icon.png'
+    }))
+    });
+
+    //Adding a marker on the map
+    var marker = new ol.Feature({
+    geometry: new ol.geom.Point(
+    ol.proj.fromLonLat([9.597657322883604, 50.63273871494269])
+    )
+    });
+
+    marker.setStyle(iconStyle);
+
+    var vectorSource = new ol.source.Vector({
+    features: [marker]
+    });
+
+    var markerVectorLayer = new ol.layer.Vector({
+    source: vectorSource,
+    });
+
+    // add style to Vector layer style map
+    map.addLayer(markerVectorLayer);
+
+
+    function updateCoordinate(item) {
+    var longitute = item.Coordinate.Longitude;
+    var latitude = item.Coordinate.Latitude;
+
+    var featureToUpdate = marker;
+    var coord = ol.proj.fromLonLat([longitute, latitude]);
+    featureToUpdate.getGeometry().setCoordinates(coord);
+
+    map.getView().setCenter(ol.proj.transform([longitute, latitude], 'EPSG:4326', 'EPSG:3857'));
+
+    map.getView().setZoom(18);
+    }
+
+    /*
+    var longlats =[[8.659884363412855, 49.41969991192511],
+               [8.660540968146961, 49.4198716011301],
+               [8.661403566664374, 49.42009772748386],
+               [8.66322746872902, 49.42057649771169],
+               [8.664087116914743, 49.42081845465589],
+               [8.66372314095497, 49.421302321213346]]
+    */
+
+    $(document).ready(function() {
+        var count = 0;
+        var item = {};
+        item.id = marker.getId;
+        item.Coordinate = {};
+
+        var url = new URL(location.href);
+        var order_tracking_id = url.searchParams.get("order_tracking_id");
+
+        var setIntervalId = setInterval(function() {
+                                $.ajax({
+                                    url: "http://127.0.0.1:5050/live_tracking/"+order_tracking_id,
+                                    type: "GET",
+                                    dataType: 'json',
+                                    success: function(longlats) {
+                                        if(longlats.length == 2) {
+                                            item.Coordinate.Longitude = longlats[0];
+                                            item.Coordinate.Latitude = longlats[1];
+                                            updateCoordinate(item);
+                                        } else if(longlats.length == 1) {
+                                            if(longlats[0] == 'Delivered') {
+                                                console.log("Stopping the Set Interval Function");
+                                                clearInterval(setIntervalId);
+
+												$("#after-delivery").addClass("completed")
+												$("#after-delivery p").html("Delivered")
+
+                                                return;
+                                            } else if(longlats[0] == 'Wait') {
+                                                return;
+                                            }
+                                        } else {
+                                            return;
+                                        }
+                                    },
+                                    error: function (error) {
+                                        console.log("Stopping the Set Interval Function");
+                                        clearInterval(setIntervalId);
+                                    }
+                                });
+                            }, 400);
+    });
+</script>
+
+</html>

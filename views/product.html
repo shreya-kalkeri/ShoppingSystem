@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Shopping System</title>
+
+	<link rel="stylesheet" href="imports/fontawesome.css" />
+
+	<link rel="stylesheet" href="imports/bootstrap.min.css">
+	<script src="imports/jquery-3.6.0.js"></script>
+
+	<link rel="stylesheet" href="imports/jquery.dataTables.min.css">
+	<script src="imports/jquery.dataTables.min.js"></script>
+
+	<script src="js/username.js"></script>
+	<link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+	<div class="container-fluid">
+
+        <div class="navigation-bar">
+    		<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    			<a class="navbar-brand" href="index.html">Shopping System</a>
+
+    			<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+    				<div class="navbar-nav">
+    					<a class="nav-item nav-link" href="cart.html">Cart</a>
+    					<a class="nav-item nav-link" href="orders.html">Orders</a>
+    				</div>
+
+					<div class="navbar-nav ms-auto flex-nowrap">
+    					<a class="nav-item nav-link login-link" href="login.html">Login</a>
+						<a class="nav-item nav-link name-link" href="javascript:void(0)">Name Here</a>
+    				</div>
+    			</div>
+    		</nav>
+    	</div>
+
+    	<div class="container mt-5 mb-5">
+    		<div class="row">
+                <div class="col-9">
+                    <div class="table-container">
+            			<div class="d-flex justify-content-center">
+            				<h3 id="product_name"></h3>
+            			</div>
+
+                        <div class="d-flex justify-content-center description-container">
+                            <p></p>
+                        </div>
+
+                        <table class="table table-bordered mt-2" id="product-table">
+            				<tbody>
+								<tr>
+                                	<td><strong>Category</strong></td>
+									<td id="product_info_1"></td>
+                                </tr>
+								<tr>
+                                	<td><strong>Price</strong></td>
+									<td id="product_info_2"></td>
+                                </tr>
+								<tr>
+                                	<td><strong>Rating</strong></td>
+									<td id="product_info_3"></td>
+                                </tr>
+                                <tr>
+                                	<td><strong>In Stock</strong></td>
+									<td id="product_info_4"></td>
+                                </tr>
+								<tr>
+                                	<td><strong>Sold Quantities</strong></td>
+									<td id="product_info_5"></td>
+                                </tr>
+            				</tbody>
+            			</table>
+                        <button class="btn btn-primary add_to_cart_btn" onclick="addToCart()">Add to Cart</button>
+            		</div>
+                </div>
+
+                <div class="col-3">
+
+                </div>
+            </div>
+    	</div>
+    </div>
+</body>
+
+<script>
+    function addToCart() {
+        var url = new URL(location.href);
+        product_id = url.searchParams.get("product_id");
+
+        var user_data = sessionStorage.getItem("current_user_data");
+
+        var user_id = "";
+        if(!(user_data === null)){
+            var user_data_json = JSON.parse(user_data);
+            user_id = user_data_json["user_id"]
+        }
+
+        var jsonData = {
+                            "user_id": user_id,
+                            "product_id": product_id
+                       }
+
+        $.ajax({
+            url: "http://127.0.0.1:5050/add_product_to_cart",
+            type: "POST",
+            data: JSON.stringify(jsonData),
+            contentType:"application/json",
+            dataType: 'json',
+            success: function(response) {
+                alert(response["message"])
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        var url = new URL(location.href);
+        product_id = url.searchParams.get("product_id");
+
+        $.ajax({
+            url: "http://127.0.0.1:5050/fetch_product/" + product_id,
+            type: "GET",
+            dataType: 'json',
+            success: function(response) {
+                $("#product_name").html(response['name']);
+                $(".description-container p").html(response['description']);
+                $("#product_info_1").html(response['category']);
+                $("#product_info_2").html(response['price']);
+                $("#product_info_3").html(response['rating']);
+                $("#product_info_4").html(response['inventory']);
+                $("#product_info_5").html(response['sold_qtn']);
+            }
+        });
+    });
+</script>
+
+</html>
