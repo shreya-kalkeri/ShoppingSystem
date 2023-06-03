@@ -29,3 +29,16 @@ On Win: ``python app.py``<br>
 To stop the server use ``command + c``or ``ctrl + c``<br><br>
 7. Navigate to the view folder. Open ``index.html`` in a browser.
 ---
+
+# Sample Screenshots
+
+<img src="https://github.com/sprakshith/ShoppingSystem/blob/main/ShoppingSystem%20Screenshots/Sample_1.PNG" alt="Opps!"/>
+<hr>
+<img src="https://github.com/sprakshith/ShoppingSystem/blob/main/ShoppingSystem%20Screenshots/Sample_2.PNG" alt="Opps!"/>
+<hr>
+<img src="https://github.com/sprakshith/ShoppingSystem/blob/main/ShoppingSystem%20Screenshots/Sample_3.PNG" alt="Opps!"/>
+<hr>
+<img src="https://github.com/sprakshith/ShoppingSystem/blob/main/ShoppingSystem%20Screenshots/Sample_4.PNG" alt="Opps!"/>
+<hr>
+<img src="https://github.com/sprakshith/ShoppingSystem/blob/main/ShoppingSystem%20Screenshots/Sample_5.PNG" alt="Opps!"/>
+<hr>
